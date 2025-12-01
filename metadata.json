@@ -1,0 +1,5 @@
+{
+  "name": "FormaCheck",
+  "description": "A powerful, client-side code beautifier and formatter supporting multiple languages and diff checker between 2 files.",
+  "requestFramePermissions": []
+}
