@@ -1,13 +1,12 @@
 import React from 'react';
 import { Language, ViewMode } from '../types';
-import { Wand2, Zap, ArrowRightLeft, Settings2, FileDiff, FileCode2 } from 'lucide-react';
+import { Wand2, Zap, Settings2, FileDiff, FileCode2 } from 'lucide-react';
 
 interface ToolbarProps {
   language: Language;
   setLanguage: (lang: string) => void;
   onBeautify: () => void;
   onMinify: () => void;
-  onSwap: () => void;
   autoUpdate: boolean;
   setAutoUpdate: (val: boolean) => void;
   viewMode: ViewMode;
@@ -19,7 +18,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
   setLanguage, 
   onBeautify, 
   onMinify,
-  onSwap,
   autoUpdate,
   setAutoUpdate,
   viewMode,
@@ -33,7 +31,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <div className="flex items-center gap-6">
             <div className="flex items-center gap-2 text-blue-500 font-bold text-xl mr-2">
                 <Settings2 className="w-6 h-6" />
-                <span className="hidden sm:inline">FormaCheck</span>
+                <span className="hidden sm:inline">CodePolish</span>
             </div>
 
             {/* Mode Tabs */}
@@ -111,14 +109,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
             >
                 <Zap size={16} />
                 Minify
-            </button>
-            
-            <button 
-                onClick={onSwap}
-                className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-2 rounded font-medium transition-all transform active:scale-95"
-                title="Use Output as Input"
-            >
-                <ArrowRightLeft size={16} />
             </button>
             </div>
         )}

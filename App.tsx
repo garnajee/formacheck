@@ -70,6 +70,13 @@ function App() {
     setError(null);
     try {
       const minified = minifyCode(inputCode, language);
+      
+      // Safety check: if minification returns empty string but input wasn't empty, something went wrong (bad regex)
+      // or if logic returned error.
+      if (!minified && inputCode.trim().length > 0) {
+        throw new Error("Minification produced empty result");
+      }
+
       if (language === Language.JSON) {
         setInputCode(minified);
       } else {
@@ -78,6 +85,7 @@ function App() {
       showNotification('Code minified successfully!');
     } catch (e: any) {
       setError(e.message || 'Minification failed');
+      console.error(e);
     }
   };
 
@@ -146,34 +154,29 @@ function App() {
     }
   };
 
-  const handleSwap = () => {
-    setInputCode(outputCode);
-    setOutputCode(''); 
-    showNotification('Output moved to Input');
-  };
-
   const handleJsonChange = useCallback((val: string) => {
     setInputCode(val);
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-200 flex flex-col">
-      <Toolbar 
-        language={language}
-        setLanguage={handleLanguageChange}
-        onBeautify={() => handleBeautify(false)}
-        onMinify={handleMinify}
-        onSwap={handleSwap}
-        autoUpdate={autoUpdate}
-        setAutoUpdate={setAutoUpdate}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-      />
+    <div className="h-screen bg-gray-950 text-gray-200 flex flex-col overflow-hidden">
+      <div className="flex-none">
+        <Toolbar 
+            language={language}
+            setLanguage={handleLanguageChange}
+            onBeautify={() => handleBeautify(false)}
+            onMinify={handleMinify}
+            autoUpdate={autoUpdate}
+            setAutoUpdate={setAutoUpdate}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+        />
+      </div>
 
-      <main className="flex-grow p-4 md:p-6 max-w-[1920px] mx-auto w-full flex flex-col gap-6">
+      <main className="flex-grow flex flex-col min-h-0 overflow-hidden p-4 md:p-6 gap-4 max-w-[1920px] mx-auto w-full">
         
         {/* Error / Notification Banner */}
-        <div className="h-8 flex items-center justify-center">
+        <div className="flex-none h-8 flex items-center justify-center">
           {error && (
             <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-1.5 rounded-full text-sm animate-pulse">
               Error: {error}
@@ -187,8 +190,8 @@ function App() {
         </div>
 
         {/* View Switching Logic */}
-        {viewMode === 'diff' ? (
-             <div className="flex-grow h-[calc(100vh-200px)]">
+        <div className="flex-grow min-h-0 relative">
+            {viewMode === 'diff' ? (
                 <DiffViewer 
                     language={language}
                     original={inputCode}
@@ -200,12 +203,10 @@ function App() {
                     onCopy={handleCopy}
                     onDownload={handleDownload}
                 />
-             </div>
-        ) : (
-            <>
-                {language === Language.JSON ? (
-                    // Single Pane for JSON Formatter
-                    <div className="flex-grow h-[calc(100vh-200px)]">
+            ) : (
+                <>
+                    {language === Language.JSON ? (
+                        // Single Pane for JSON Formatter
                         <JsonVisualEditor 
                             title="JSON Visual Editor"
                             value={inputCode}
@@ -213,39 +214,39 @@ function App() {
                             onClear={() => setInputCode('')}
                             onDownload={() => handleDownload(inputCode, 'input')}
                         />
-                    </div>
-                ) : (
-                    // Split Pane for other languages Formatter
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-grow h-[calc(100vh-200px)]">
-                        <CodeEditor 
-                            title="Input / Source"
-                            language={language}
-                            value={inputCode}
-                            onChange={handleInputChange}
-                            onClear={() => setInputCode('')}
-                            onCopy={() => handleCopy(inputCode)}
-                            onPaste={handlePaste}
-                            onUpload={handleInputUpload}
-                            onDownload={() => handleDownload(inputCode, 'input')}
-                        />
-                        
-                        <CodeEditor 
-                            title="Output / Result"
-                            language={language}
-                            value={outputCode}
-                            onChange={(val) => setOutputCode(val || '')}
-                            onClear={() => setOutputCode('')}
-                            onCopy={() => handleCopy(outputCode)}
-                            onDownload={() => handleDownload(outputCode, 'output')}
-                            readOnly={false} 
-                        />
-                    </div>
-                )}
-            </>
-        )}
+                    ) : (
+                        // Split Pane for other languages Formatter
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                            <CodeEditor 
+                                title="Input / Source"
+                                language={language}
+                                value={inputCode}
+                                onChange={handleInputChange}
+                                onClear={() => setInputCode('')}
+                                onCopy={() => handleCopy(inputCode)}
+                                onPaste={handlePaste}
+                                onUpload={handleInputUpload}
+                                onDownload={() => handleDownload(inputCode, 'input')}
+                            />
+                            
+                            <CodeEditor 
+                                title="Output / Result"
+                                language={language}
+                                value={outputCode}
+                                onChange={(val) => setOutputCode(val || '')}
+                                onClear={() => setOutputCode('')}
+                                onCopy={() => handleCopy(outputCode)}
+                                onDownload={() => handleDownload(outputCode, 'output')}
+                                readOnly={false} 
+                            />
+                        </div>
+                    )}
+                </>
+            )}
+        </div>
 
         {/* Info Footer */}
-        <div className="text-center text-gray-500 text-sm pb-4">
+        <div className="flex-none text-center text-gray-500 text-sm pt-2">
           <p>Processing is done entirely in your browser. No code is sent to any server.</p>
         </div>
       </main>

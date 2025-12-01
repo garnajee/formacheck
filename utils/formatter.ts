@@ -132,7 +132,6 @@ export const formatCode = async (code: string, language: Language): Promise<stri
           
       case Language.MARKDOWN:
           // Simple Markdown formatting (normalize headers and lists)
-          // Since we don't have the markdown parser loaded for prettier, we do basic cleanup
           return code
             .replace(/^#+\s*/gm, (match) => match.trim() + ' ') // Fix header spacing
             .replace(/^\s*[-*]\s+/gm, '- '); // Normalize list bullets
@@ -152,24 +151,49 @@ export const minifyCode = (code: string, language: Language): string => {
    try {
      switch (language) {
        case Language.JSON:
+         // Safe minification
          return JSON.stringify(JSON.parse(code));
+         
        case Language.HTML:
        case Language.XML:
-         return code.replace(/>\s+</g, '><').replace(/\s{2,}/g, ' ').trim();
+         // Remove newlines and multiple spaces between tags
+         return code
+            .replace(/>\s+</g, '><')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+            
        case Language.CSS:
-         return code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([:;{}])\s*/g, '$1').trim();
+         // Remove comments and whitespace
+         return code
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .replace(/\s+/g, ' ')
+            .replace(/\s*([:;{}])\s*/g, '$1')
+            .trim();
+            
        case Language.JAVASCRIPT:
        case Language.TYPESCRIPT:
+         // Safer simple minification for client-side without parser
+         // 1. Remove single line comments
+         // 2. Remove multi line comments
+         // 3. Remove new lines
+         // 4. Collapse multiple spaces (but be careful about strings - this is imperfect regex minification)
+         // A safe compromise for "minify" button without a real bundler:
          return code
-            .replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1')
-            .replace(/\s+/g, ' ')
+            .replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1') // Remove comments
+            .replace(/^\s+|\s+$/gm, '') // Trim lines
+            .replace(/[\n\r]+/g, ' ') // Replace newlines with space
+            .replace(/\s{2,}/g, ' ') // Collapse spaces
             .trim();
+
        case Language.SQL:
          return code.replace(/\s+/g, ' ').trim();
+         
        default:
          return code.replace(/\s+/g, ' ');
      }
    } catch (e) {
-     throw e;
+     console.error("Minification error", e);
+     // Return original code if minification fails to avoid "deleting" user content
+     return code;
    }
 }

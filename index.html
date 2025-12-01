@@ -20,11 +20,14 @@
         }
       }
     </script>
+    <!-- Basic styles for vanilla-jsoneditor -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanilla-jsoneditor@0.23.2/dist/jsoneditor.min.css">
     <style>
       body {
         background-color: #0f172a;
         color: #e2e8f0;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        overflow: hidden; /* Prevent body scroll, let app handle it */
       }
       /* Custom scrollbar for editors */
       ::-webkit-scrollbar {
@@ -57,6 +60,17 @@
         --jse-edit-outline: 2px solid #3b82f6;
         --jse-selection-background-color: #374151;
         --jse-hover-background-color: #374151;
+        --jse-main-border: 1px solid #374151;
+        
+        /* Gutter (Line numbers) and Panel specific styles */
+        --jse-gutter-background-color: #111827;
+        --jse-gutter-color: #6b7280;
+        --jse-panel-background: #111827;
+        --jse-panel-border: #374151;
+        --jse-context-menu-background: #1f2937;
+        --jse-context-menu-color: #e5e7eb;
+        --jse-context-menu-button-background-highlight: #374151;
+
         font-family: 'Fira Code', monospace;
       }
     </style>
@@ -76,8 +90,8 @@
     "prettier/plugins/estree": "https://esm.sh/prettier@3.0.3/plugins/estree",
     "prettier/plugins/typescript": "https://esm.sh/prettier@3.0.3/plugins/typescript",
     "vanilla-jsoneditor": "https://esm.sh/vanilla-jsoneditor@0.23.2",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "prettier/": "https://aistudiocdn.com/prettier@^3.7.3/"
   }
 }

@@ -68,8 +68,6 @@ const JsonVisualEditor: React.FC<JsonVisualEditorProps> = ({
   // Sync props value to editor
   useEffect(() => {
     // Only update the editor if the prop value is different from what we last emitted
-    // This breaks the loop: User types -> onChange -> State Update -> Prop Update -> Editor Update (Skipped)
-    // External Update (Paste/Clear) -> State Update -> Prop Update -> Editor Update (Applied)
     if (editorRef.current && value !== lastEmittedValue.current) {
       lastEmittedValue.current = value;
       // We catch potential "Canceled" errors if updates happen too quickly
@@ -85,11 +83,19 @@ const JsonVisualEditor: React.FC<JsonVisualEditorProps> = ({
   }, [value]);
 
   const handleExpandAll = () => {
-    if (editorRef.current) editorRef.current.expandAll();
+    // Use the functional form of expand to expand all nodes
+    if (editorRef.current) {
+        // @ts-ignore
+        editorRef.current.expand(() => true);
+    }
   };
 
   const handleCollapseAll = () => {
-    if (editorRef.current) editorRef.current.collapseAll();
+    // Use the functional form of expand returning false to collapse all nodes
+    if (editorRef.current) {
+        // @ts-ignore
+        editorRef.current.expand(() => false);
+    }
   };
 
   const handleCopyDirectly = async () => {
@@ -121,7 +127,7 @@ const JsonVisualEditor: React.FC<JsonVisualEditorProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-xl">
+    <div className="flex flex-col h-full bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-xl jse-theme-dark">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-700">
         <div className="flex items-center gap-3">
@@ -175,7 +181,7 @@ const JsonVisualEditor: React.FC<JsonVisualEditorProps> = ({
 
       <div 
         ref={containerRef} 
-        className="flex-grow h-0 min-h-[400px] jse-theme-dark" 
+        className="flex-grow h-0 min-h-[400px]" 
       />
       
       <div className="bg-gray-900 px-4 py-1 text-xs text-gray-500 flex justify-between border-t border-gray-700">
