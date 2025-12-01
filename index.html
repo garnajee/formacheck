@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FormaCheck - Modern Code Beautifier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              gray: {
+                750: '#2d3748',
+                850: '#1a202c',
+                950: '#0d1117',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #0f172a;
+        color: #e2e8f0;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      }
+      /* Custom scrollbar for editors */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1e293b;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 5px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+      
+      /* JSON Editor Dark Theme Overrides */
+      .jse-theme-dark {
+        --jse-theme-color: #3b82f6;
+        --jse-theme-color-highlight: #60a5fa;
+        --jse-background-color: #1f2937;
+        --jse-text-color: #e5e7eb;
+        --jse-key-color: #93c5fd;
+        --jse-value-color: #fca5a5;
+        --jse-value-color-number: #fcd34d;
+        --jse-value-color-boolean: #c4b5fd;
+        --jse-value-color-string: #86efac;
+        --jse-delimiter-color: #6b7280;
+        --jse-edit-outline: 2px solid #3b82f6;
+        --jse-selection-background-color: #374151;
+        --jse-hover-background-color: #374151;
+        font-family: 'Fira Code', monospace;
+      }
+    </style>
+
+<link rel="stylesheet" href="/index.css">
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0",
+    "@monaco-editor/react": "https://esm.sh/@monaco-editor/react@4.6.0?deps=react@18.2.0,react-dom@18.2.0",
+    "prettier/standalone": "https://esm.sh/prettier@3.0.3/standalone",
+    "prettier/plugins/babel": "https://esm.sh/prettier@3.0.3/plugins/babel",
+    "prettier/plugins/html": "https://esm.sh/prettier@3.0.3/plugins/html",
+    "prettier/plugins/postcss": "https://esm.sh/prettier@3.0.3/plugins/postcss",
+    "prettier/plugins/estree": "https://esm.sh/prettier@3.0.3/plugins/estree",
+    "prettier/plugins/typescript": "https://esm.sh/prettier@3.0.3/plugins/typescript",
+    "vanilla-jsoneditor": "https://esm.sh/vanilla-jsoneditor@0.23.2",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "prettier/": "https://aistudiocdn.com/prettier@^3.7.3/"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/formacheck/assets/index-Cgr1V5HF.js"></script>
+</head>
+  <body>
+    <div id="root"></div>
+</body>
+</html>
