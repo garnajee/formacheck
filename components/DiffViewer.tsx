@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { DiffEditor, OnMount } from '@monaco-editor/react';
 import { Language } from '../types';
 import { Upload, Trash2, FileText, Copy, Download } from 'lucide-react';
@@ -43,36 +43,53 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Cleanup on unmount
+  // Cleanup on unmount or when switching views
   useEffect(() => {
     return () => {
       // Dispose all listeners
       listenersRef.current.forEach(disposable => disposable.dispose());
       listenersRef.current = [];
-      // Note: We do NOT call setModel(null) here anymore. 
-      // Letting the wrapper/library handle model disposal prevents the "TextModel got disposed" error.
+      diffEditorRef.current = null;
     };
-  }, []);
+  }, [isMobile]); // Re-run cleanup if switching between mobile/desktop layouts
+
+  // Memoize options to prevent unnecessary re-renders/re-initializations
+  const editorOptions = useMemo(() => ({
+    originalEditable: true,
+    fontSize: 14,
+    wordWrap: 'on' as const,
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+    padding: { top: 16, bottom: 16 },
+    fontFamily: "'Fira Code', 'Cascadia Code', Consolas, monospace",
+    renderSideBySide: true
+  }), []);
 
   // Sync Props to Model safely (Fix for Reverse Writing / Cursor Jump)
   // We only update if the model exists, isn't disposed, and the value actually differs.
   useEffect(() => {
     if (diffEditorRef.current && !isMobile) {
-        const originalEditor = diffEditorRef.current.getOriginalEditor();
-        const modifiedEditor = diffEditorRef.current.getModifiedEditor();
-        
-        if (originalEditor) {
-            const model = originalEditor.getModel();
-            if (model && !model.isDisposed() && model.getValue() !== original) {
-                model.setValue(original);
+        try {
+            const editor = diffEditorRef.current;
+            const originalEditor = editor.getOriginalEditor();
+            const modifiedEditor = editor.getModifiedEditor();
+            
+            if (originalEditor) {
+                const model = originalEditor.getModel();
+                if (model && !model.isDisposed() && model.getValue() !== original) {
+                    model.setValue(original);
+                }
             }
-        }
-        
-        if (modifiedEditor) {
-            const model = modifiedEditor.getModel();
-            if (model && !model.isDisposed() && model.getValue() !== modified) {
-                model.setValue(modified);
+            
+            if (modifiedEditor) {
+                const model = modifiedEditor.getModel();
+                if (model && !model.isDisposed() && model.getValue() !== modified) {
+                    model.setValue(modified);
+                }
             }
+        } catch (e) {
+            // Ignore errors during disposal
+            console.warn("Safe sync skipped", e);
         }
     }
   }, [original, modified, isMobile]);
@@ -270,16 +287,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
           language={language}
           onMount={handleEditorDidMount}
           theme="vs-dark"
-          options={{
-            originalEditable: true,
-            fontSize: 14,
-            wordWrap: 'on',
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            padding: { top: 16, bottom: 16 },
-            fontFamily: "'Fira Code', 'Cascadia Code', Consolas, monospace",
-            renderSideBySide: true
-          }}
+          options={editorOptions}
         />
       </div>
       
