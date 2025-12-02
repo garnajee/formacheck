@@ -159,7 +159,8 @@ function App() {
   }, []);
 
   return (
-    <div className="h-screen bg-gray-950 text-gray-200 flex flex-col overflow-hidden">
+    // Mobile: min-h-screen (scrollable). Desktop: h-screen (fixed).
+    <div className="min-h-screen lg:h-screen bg-gray-950 text-gray-200 flex flex-col overflow-x-hidden w-full">
       <div className="flex-none">
         <Toolbar 
             language={language}
@@ -173,7 +174,7 @@ function App() {
         />
       </div>
 
-      <main className="flex-grow flex flex-col min-h-0 overflow-hidden p-4 md:p-6 gap-4 max-w-[1920px] mx-auto w-full">
+      <main className="flex-grow flex flex-col min-h-0 p-4 md:p-6 gap-4 max-w-[1920px] mx-auto w-full lg:overflow-hidden">
         
         {/* Error / Notification Banner */}
         <div className="flex-none h-8 flex items-center justify-center">
@@ -190,7 +191,7 @@ function App() {
         </div>
 
         {/* View Switching Logic */}
-        <div className="flex-grow min-h-0 relative">
+        <div className="flex-grow relative flex flex-col min-h-[500px] lg:min-h-0 w-full">
             {viewMode === 'diff' ? (
                 <DiffViewer 
                     language={language}
@@ -216,7 +217,7 @@ function App() {
                         />
                     ) : (
                         // Split Pane for other languages Formatter
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full w-full">
                             <CodeEditor 
                                 title="Input / Source"
                                 language={language}
@@ -246,8 +247,16 @@ function App() {
         </div>
 
         {/* Info Footer */}
-        <div className="flex-none text-center text-gray-500 text-sm pt-2">
-          <p>Processing is done entirely in your browser. No code is sent to any server.</p>
+        <div className="flex-none text-center text-gray-500 text-sm py-4">
+          <p className="mb-1">Processing is done entirely in your browser. No code is sent to any server.</p>
+          <a 
+            href="https://github.com/garnajee/formacheck/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-400 hover:underline transition-colors"
+          >
+            View Source on GitHub
+          </a>
         </div>
       </main>
     </div>

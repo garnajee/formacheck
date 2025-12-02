@@ -1,7 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { DiffEditor, OnMount } from '@monaco-editor/react';
 import { Language } from '../types';
 import { Upload, Trash2, FileText, Copy, Download } from 'lucide-react';
+import CodeEditor from './CodeEditor';
 
 interface DiffViewerProps {
   language: Language;
@@ -30,42 +31,91 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
   const originalFileInputRef = useRef<HTMLInputElement>(null);
   const modifiedFileInputRef = useRef<HTMLInputElement>(null);
   const listenersRef = useRef<any[]>([]);
+  
+  // Detect mobile width to toggle side-by-side vs inline view
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
 
-  // Cleanup on unmount to prevent "TextModel got disposed" error
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       // Dispose all listeners
       listenersRef.current.forEach(disposable => disposable.dispose());
       listenersRef.current = [];
-
-      // Detach model to prevent race condition during unmount
-      if (diffEditorRef.current) {
-        try {
-            diffEditorRef.current.setModel(null);
-        } catch (e) {
-            // Ignore potential errors during disposal
-        }
-      }
+      // Note: We do NOT call setModel(null) here anymore. 
+      // Letting the wrapper/library handle model disposal prevents the "TextModel got disposed" error.
     };
   }, []);
+
+  // Sync Props to Model safely (Fix for Reverse Writing / Cursor Jump)
+  // We only update if the model exists, isn't disposed, and the value actually differs.
+  useEffect(() => {
+    if (diffEditorRef.current && !isMobile) {
+        const originalEditor = diffEditorRef.current.getOriginalEditor();
+        const modifiedEditor = diffEditorRef.current.getModifiedEditor();
+        
+        if (originalEditor) {
+            const model = originalEditor.getModel();
+            if (model && !model.isDisposed() && model.getValue() !== original) {
+                model.setValue(original);
+            }
+        }
+        
+        if (modifiedEditor) {
+            const model = modifiedEditor.getModel();
+            if (model && !model.isDisposed() && model.getValue() !== modified) {
+                model.setValue(modified);
+            }
+        }
+    }
+  }, [original, modified, isMobile]);
+
 
   const handleEditorDidMount: OnMount = (editor) => {
     diffEditorRef.current = editor;
     
     // Listen to changes on the original model (Left side)
-    const originalModel = editor.getOriginalEditor().getModel();
+    const originalEditor = editor.getOriginalEditor();
+    const originalModel = originalEditor.getModel();
+    
     if (originalModel) {
+        // Init value if needed
+        if (!originalModel.isDisposed() && originalModel.getValue() !== original) {
+            originalModel.setValue(original);
+        }
+
         const d = originalModel.onDidChangeContent(() => {
-            onOriginalChange(originalModel.getValue());
+            if (originalModel.isDisposed()) return;
+            const val = originalModel.getValue();
+            if (val !== original) {
+                onOriginalChange(val);
+            }
         });
         listenersRef.current.push(d);
     }
 
     // Listen to changes on the modified model (Right side)
-    const modifiedModel = editor.getModifiedEditor().getModel();
+    const modifiedEditor = editor.getModifiedEditor();
+    const modifiedModel = modifiedEditor.getModel();
+    
     if (modifiedModel) {
+        if (!modifiedModel.isDisposed() && modifiedModel.getValue() !== modified) {
+            modifiedModel.setValue(modified);
+        }
+
         const d = modifiedModel.onDidChangeContent(() => {
-            onModifiedChange(modifiedModel.getValue());
+            if (modifiedModel.isDisposed()) return;
+            const val = modifiedModel.getValue();
+            if (val !== modified) {
+                onModifiedChange(val);
+            }
         });
         listenersRef.current.push(d);
     }
@@ -84,22 +134,54 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
       };
       reader.readAsText(file);
     }
-    // Reset inputs
     if (originalFileInputRef.current) originalFileInputRef.current.value = '';
     if (modifiedFileInputRef.current) modifiedFileInputRef.current.value = '';
   };
 
+  // Mobile View: Render two stacked standard CodeEditors
+  if (isMobile) {
+      return (
+          <div className="flex flex-col gap-4 h-full w-full">
+               <div className="flex-1 min-h-[350px]">
+                    <CodeEditor 
+                        title="Original (Source)"
+                        language={language}
+                        value={original}
+                        onChange={(val) => onOriginalChange(val || '')}
+                        onClear={() => onOriginalChange('')}
+                        onCopy={() => onCopy(original)}
+                        onDownload={() => onDownload(original, 'original')}
+                        onUpload={onOriginalUpload}
+                    />
+               </div>
+               <div className="flex-1 min-h-[350px]">
+                    <CodeEditor 
+                        title="Modified (Target)"
+                        language={language}
+                        value={modified}
+                        onChange={(val) => onModifiedChange(val || '')}
+                        onClear={() => onModifiedChange('')}
+                        onCopy={() => onCopy(modified)}
+                        onDownload={() => onDownload(modified, 'modified')}
+                        onUpload={onModifiedUpload}
+                    />
+               </div>
+          </div>
+      );
+  }
+
+  // Desktop View: Render Side-by-Side DiffEditor
   return (
-    <div className="flex flex-col h-full bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-xl">
+    <div className="flex flex-col h-full bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-xl w-full">
       {/* Header Controls */}
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-700">
+      <div className="flex items-center justify-between bg-gray-900 border-b border-gray-700">
         
         {/* Left Control (Original) */}
-        <div className="flex items-center gap-4 w-1/2 pr-2">
+        <div className="flex items-center justify-between px-4 py-2 w-1/2 border-r border-gray-700">
             <h2 className="text-sm font-semibold text-red-300 uppercase tracking-wider flex items-center gap-2">
-                <FileText size={14} /> Original
+                <FileText size={14} /> <span className="hidden sm:inline">Original</span>
             </h2>
-            <div className="flex items-center gap-1 ml-auto">
+            <div className="flex items-center gap-1">
                 <input 
                     type="file" 
                     ref={originalFileInputRef} 
@@ -137,14 +219,12 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
             </div>
         </div>
 
-        <div className="w-px h-6 bg-gray-700"></div>
-
         {/* Right Control (Modified) */}
-        <div className="flex items-center gap-4 w-1/2 pl-4">
+        <div className="flex items-center justify-between px-4 py-2 w-1/2">
              <h2 className="text-sm font-semibold text-green-300 uppercase tracking-wider flex items-center gap-2">
-                <FileText size={14} /> Modified
+                <FileText size={14} /> <span className="hidden sm:inline">Modified</span>
             </h2>
-             <div className="flex items-center gap-1 ml-auto">
+             <div className="flex items-center gap-1">
                 <input 
                     type="file" 
                     ref={modifiedFileInputRef} 
@@ -188,8 +268,6 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
         <DiffEditor
           height="100%"
           language={language}
-          original={original}
-          modified={modified}
           onMount={handleEditorDidMount}
           theme="vs-dark"
           options={{
